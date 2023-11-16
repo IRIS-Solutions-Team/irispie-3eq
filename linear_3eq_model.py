@@ -9,7 +9,7 @@ import plotly as _pl
 
 ## Create model object
 
-m = _ir.Model.from_file("linear_3eq.model", linear=True, )
+m = _ir.Simultaneous.from_file("linear_3eq.model", linear=True, )
 
 
 ## Assign parameters
@@ -157,5 +157,4 @@ fcast_db.to_sheet(
     "forecast_output_databank.csv", 
     frequency_range={_ir.Freq.QUARTERLY: _ir.qq(2000,1)>>fcast_range[-1], },
 )
-
 

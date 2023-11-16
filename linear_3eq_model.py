@@ -7,6 +7,9 @@ import irispie as _ir
 import plotly as _pl
 
 
+_ir.min_irispie_version_required("0.22.1", )
+
+
 ## Create model object
 
 m = _ir.Simultaneous.from_file("linear_3eq.model", linear=True, )

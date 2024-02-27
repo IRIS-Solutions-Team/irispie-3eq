@@ -1,0 +1,16 @@
+{
+    "ss_rrs": 0.5,
+    "ss_diff_cpi": 2,
+    "ss_diff_y_tnd": 1.5,
+    "c0_y_gap": 0.75,
+    "c1_y_gap": 0.1,
+    "c0_diff_cpi": 0.55,
+    "c1_diff_cpi": 0.1,
+    "c1_E_diff_cpi": 1,
+    "c0_rs": 0.75,
+    "c1_rs": 4,
+    "std_shk_y_tnd": 1.0,
+    "std_shk_y_gap": 1.0,
+    "std_shk_diff_cpi": 1.0,
+    "std_shk_rs": 1.0
+}

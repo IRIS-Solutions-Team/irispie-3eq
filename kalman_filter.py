@@ -1,54 +1,94 @@
 
+import sys
 import numpy as np
 import irispie as ir
+import create_model as cm
 
 
-model = ir.load("linear_3eq.dill", )
+m = cm.main()
 
-model.assign(
-    ss_diff_y_tnd=0,
+(c, *_), dims = m.get_acov()
+
+sol = m.get_solution_matrices()
+vec = m.get_solution_vectors()
+cov_u = m.get_cov_unanticipated_shocks()
+
+T = sol.T
+P = sol.P
+
+x = np.zeros(T.shape, dtype=float, )
+d = []
+
+for i in range(1000):
+    x0 = x.copy()
+    x = T @ x @ T.T + P @ cov_u @ P.T
+    d.append(np.max(np.abs(x - x0)))
+
+
+
+
+start_sim = ir.qq(2021,1)
+end_sim = ir.qq(2022,4)
+sim_span = start_sim >> end_sim
+
+
+obs_db = ir.Databox.from_sheet(
+    "obs_db.csv",
+    date_creator=ir.Dater.from_iso_string,
 )
 
-model.steady()
-model.solve()
-model.check_steady()
-
-start_filt = ir.qq(2021,1)
-end_filt = ir.qq(2022,4)
+start_filt = start_sim
+end_filt = end_sim
 filt_span = start_filt >> end_filt
+obs_db.clip(filt_span.start_date, None, )
 
-obs_db = ir.Databox()
-values = (1.20, 1.03, 0.91, 1.97, 0.32, 0.91, 1.41, 1.48)
-obs_db["obs_y"] = ir.Series(start_date=start_filt, values=values, )
-obs_db["obs_cpi"] = ir.Series(start_date=start_filt, values=(10, None, 12, ), )
+obs_db["obs_cpi"] = ir.Series(start_date=start_filt, values=0, )
 
-out1, info1 = model.kalman_filter(obs_db, filt_span, )
-out2, info2 = model.kalman_filter(obs_db, filt_span, rescale_variance=True, )
-out3, info3 = model.kalman_filter(obs_db, filt_span, diffuse_factor=1e8, )
-out4, info4 = model.kalman_filter(obs_db, filt_span, return_predict=False, )
+#
+# Experiment with different options
+#
 
-
-
+out1, info1 = m.kalman_filter(obs_db, filt_span, )
+out2, info2 = m.kalman_filter(obs_db, filt_span, rescale_variance=True, )
+out3, info3 = m.kalman_filter(obs_db, filt_span, diffuse_factor=1e8, )
+out4, info4 = m.kalman_filter(obs_db, filt_span, return_predict=False, )
 
 
-ext_filt_span = start_filt + model.max_lag >> end_filt
-out, info = model.kalman_filter(obs_db, ext_filt_span, )
+#
+# Start the filter at a date sufficiently before the first observation
+# so that the smoothed initial conditions and shocks can be resimulated
+# on the same span as the original observations
+#
 
-sim_db, *_ = model.simulate(out["smooth_mean"], filt_span, )
+ext_filt_span = start_filt + m.max_lag >> end_filt
+out, info = m.kalman_filter(obs_db, ext_filt_span, diffuse_factor=1e8, return_update=False, )
 
+print(out.predict_med("y_tnd | y_gap"))
+print(out.smooth_med("y_tnd | y_gap | y_tnd+y_gap | obs_y"))
+print(out.smooth_med["cpi"])
+
+
+#
+# Resimulate the model using the smoothed initial conditions and shocks
+#
+
+sim_db, info = m.simulate(out.smooth_med, filt_span, )
 
 
 #
 # Compare transition variables from the smoother and from the simulation
 #
 
-variable_names = model.get_names(kind=ir.TRANSITION_VARIABLE, )
+variable_names = m.get_names(kind=ir.TRANSITION_VARIABLE, )
 
 max_abs = lambda x: np.max(np.abs(x))
 
 compare_db = ir.Databox()
 for n in variable_names:
-    diff = out["smooth_mean"][n] - sim_db[n]
+    diff = out.smooth_med[n] - sim_db[n]
     compare_db[n] = diff.apply(max_abs, ) if diff else None
+
+
+sys.exit()
 
 

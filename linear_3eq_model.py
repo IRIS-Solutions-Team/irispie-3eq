@@ -14,16 +14,16 @@ import json
 
 m = ir.Simultaneous.from_file("linear_3eq.model", linear=True, )
 
-with open("linear_3eq.model", "rt") as f:
-    x = f.read()
-
-x = re.sub(r"\[(.\d+)\]", r"{\1}", x)
-x = x.replace("unanticipated-", "")
-x = x.replace("anticipated-", "")
-x = x.replace("#", "%", )
-
-with open("linear_3eq.matlab", "wt+") as f:
-    f.write(x)
+# with open("linear_3eq.model", "rt") as f:
+    # x = f.read()
+# 
+# x = re.sub(r"\[(.\d+)\]", r"{\1}", x)
+# x = x.replace("unanticipated-", "")
+# x = x.replace("anticipated-", "")
+# x = x.replace("#", "%", )
+# 
+# with open("linear_3eq.matlab", "wt+") as f:
+    # f.write(x)
 
 
 ## Assign parameters

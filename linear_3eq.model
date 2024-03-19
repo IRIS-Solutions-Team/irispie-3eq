@@ -27,6 +27,7 @@
         c0_diff_cpi, c1_diff_cpi
         c1_E_diff_cpi
         c0_rs, c1_rs
+        c0_y_tnd
 
 
     !transition-equations
@@ -36,7 +37,6 @@
         diff(y_tnd) = diff_y_tnd/4;
 
         diff_y_tnd = ss_diff_y_tnd + shk_y_tnd;
-        # y_tnd = shk_y_tnd;
 
         y_gap = ...
             + c0_y_gap * y_gap[-1] ...

@@ -12,13 +12,31 @@ m = assign(m, parameters);
 m = solve(m);
 m = steady(m);
 
-d = struct();
-% d.obs_y = Series(2:8, 1);
-d.obs_cpi = Series(1, 1);
+c = acf(m);
+
+sol = solutionMatrices(m, triangular=false)
 
 c = acf(m);
-select = ["y_gap", "diff_cpi", "cpi"];
-c(select, select, 1)
 
-f = kalmanFilter(m, d, 1:1, relative=false, output="pred,filter,smooth");
+start_filt = qq(2021,1);
+end_filt = qq(2022,4);
+filt_span = start_filt : end_filt;
+
+% obs_db = struct();
+% values = [1.20; 1.03; 0.91; 1.97; 0.32; 0.91; 1.41; 1.48];
+% obs_db.obs_y = Series(start_filt, values);
+% obs_db.obs_cpi = Series(start_filt, [10; NaN; 12]);
+
+obs_db = databank.fromSheet("obs_db.csv", includeComments=false);
+obs_db = databank.clip(obs_db, filt_span);
+
+obs_db.obs_cpi = Series(start_filt, 0);
+
+f = kalmanFilter(m, obs_db, filt_span, relative=false, output="pred,filter,smooth");
+
+p = f.Predict.Mean;
+d = f.Smooth.Mean;
+disp([p.y_tnd, p.y_gap])
+disp([d.y_tnd, d.y_gap, d.y_tnd + d.y_gap, obs_db.obs_y])
+disp([d.cpi]);
 

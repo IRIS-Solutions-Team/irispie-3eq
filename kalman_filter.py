@@ -2,29 +2,21 @@
 import sys
 import numpy as np
 import irispie as ir
-import create_model as cm
+import wlogging as wl
+
+import create_model
 
 
-m = cm.main()
-
-(c, *_), dims = m.get_acov()
-
-sol = m.get_solution_matrices()
-vec = m.get_solution_vectors()
-cov_u = m.get_cov_unanticipated_shocks()
-
-T = sol.T
-P = sol.P
-
-x = np.zeros(T.shape, dtype=float, )
-d = []
-
-for i in range(1000):
-    x0 = x.copy()
-    x = T @ x @ T.T + P @ cov_u @ P.T
-    d.append(np.max(np.abs(x - x0)))
+logger = wl.get_colored_logger("kalman_filter", level=wl.DEBUG, )
 
 
+m = create_model.main()
+
+logger.info("Parameter values")
+print(m.get_parameters())
+
+logger.info("Standard deviations of shocks")
+print(m.get_stds())
 
 
 start_sim = ir.qq(2021,1)
@@ -48,10 +40,10 @@ obs_db["obs_cpi"] = ir.Series(start_date=start_filt, values=0, )
 # Experiment with different options
 #
 
-out1, info1 = m.kalman_filter(obs_db, filt_span, )
-out2, info2 = m.kalman_filter(obs_db, filt_span, rescale_variance=True, )
-out3, info3 = m.kalman_filter(obs_db, filt_span, diffuse_factor=1e8, )
-out4, info4 = m.kalman_filter(obs_db, filt_span, return_predict=False, )
+# out1, info1 = m.kalman_filter(obs_db, filt_span, )
+# out2, info2 = m.kalman_filter(obs_db, filt_span, rescale_variance=True, )
+# out3, info3 = m.kalman_filter(obs_db, filt_span, diffuse_factor=1e8, )
+# out4, info4 = m.kalman_filter(obs_db, filt_span, return_predict=False, )
 
 
 #
@@ -63,8 +55,13 @@ out4, info4 = m.kalman_filter(obs_db, filt_span, return_predict=False, )
 ext_filt_span = start_filt + m.max_lag >> end_filt
 out, info = m.kalman_filter(obs_db, ext_filt_span, diffuse_factor=1e8, return_update=False, )
 
+logger.info("Prediction step for y_tnd | y_gap")
 print(out.predict_med("y_tnd | y_gap"))
+
+logger.info("Smoothing step for y_tnd | y_gap | y_tnd+y_gap | obs_y")
 print(out.smooth_med("y_tnd | y_gap | y_tnd+y_gap | obs_y"))
+
+logger.info("Smoothing step for cpi")
 print(out.smooth_med["cpi"])
 
 
@@ -89,6 +86,7 @@ for n in variable_names:
     compare_db[n] = diff.apply(max_abs, ) if diff else None
 
 
-sys.exit()
+logger.info("Max absolute difference between smoother and simulation")
+print(compare_db)
 
 

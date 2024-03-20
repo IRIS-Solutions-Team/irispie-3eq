@@ -12,11 +12,6 @@ m = assign(m, parameters);
 m = solve(m);
 m = steady(m);
 
-c = acf(m);
-
-sol = solutionMatrices(m, triangular=false)
-
-c = acf(m);
 
 start_filt = qq(2021,1);
 end_filt = qq(2022,4);
@@ -39,4 +34,5 @@ d = f.Smooth.Mean;
 disp([p.y_tnd, p.y_gap])
 disp([d.y_tnd, d.y_gap, d.y_tnd + d.y_gap, obs_db.obs_y])
 disp([d.cpi]);
+
 

@@ -65,7 +65,6 @@ print(m.get_steady_levels(round=4, ))
 m.solve(clip_small=False, )
 sol = m._variants[0].solution
 
-ir.save(m, "linear_3eq.dill", )
 
 c, dimn = m.get_acov()
 print(dimn.select(c[0], ["y_gap", "diff_cpi", "cpi"]))
@@ -96,12 +95,13 @@ ss_db = ir.Databox.steady(m, sim_range, deviation=deviation, )
 in_db = ss_db.copy()
 
 in_db["ant_shk_y_gap"].alter_num_variants(2, )
-in_db["ant_shk_y_gap"][start_sim>>start_sim+3] = [(1, 1.5, 0.5, 0.2), 0]
+in_db["ant_shk_y_gap"][start_sim+5>>start_sim+8] = [(1, 1.5, 0.5, 0.2), 0]
 
 in_db["shk_y_gap"].alter_num_variants(2, )
-in_db["shk_y_gap"][start_sim>>start_sim+3] = [0, (1, 1.5, 0.5, 0.2)]
+in_db["shk_y_gap"][start_sim+5>>start_sim+8] = [0, (1, 1.5, 0.5, 0.2)]
 
 sim_db, *_ = m.simulate(in_db, sim_range, deviation=deviation, num_variants=2, )
+
 
 ## Plot results
 
@@ -132,7 +132,7 @@ sim_ch.plot(sim_db, )
 fred_db = ir.Databox.from_sheet(
     "fred_data.csv",
     description_row=True,
-    description="US macro data from FRED",
+    databox_settings=dict(description="US macro data from FRED", ),
 )
 
 

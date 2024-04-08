@@ -13,7 +13,7 @@ def main():
     parameters = dict(
         ss_rrs = 0.5,
         ss_diff_cpi = 2,
-        ss_diff_y_tnd = 0,
+        ss_diff_y_tnd = 1,
         c0_y_gap = 0.75,
         c1_y_gap = 0.10,
         c0_diff_cpi = 0.55,

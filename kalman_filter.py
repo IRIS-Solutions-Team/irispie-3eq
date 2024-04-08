@@ -32,9 +32,26 @@ obs_db = ir.Databox.from_sheet(
 start_filt = start_sim
 end_filt = end_sim
 filt_span = start_filt >> end_filt
-obs_db.clip(filt_span.start_date, None, )
+obs_db.clip(new_start_date=filt_span.start_date, )
 
-obs_db["obs_cpi"] = ir.Series(start_date=start_filt, values=0, )
+# m.assign(
+    # std_shk_y_tnd = 1,
+    # std_shk_y_gap = 1,
+    # std_shk_diff_cpi = 1,
+    # std_shk_rs = 1,
+    # std_shk_E_diff_cpi = 1,
+# )
+
+m.solve()
+
+obs_db = ir.Databox()
+# obs_db["obs_cpi"] = ir.Series(start_date=start_filt+2, values=(0, ), )
+# obs_db["obs_diff_cpi"] = ir.Series(start_date=start_filt+2, values=(0, 0, ), )
+
+# obs_db["std_shk_E_diff_cpi"] = ir.Series(
+    # dates=start_filt+2>>start_filt+5,
+    # values=0.222,
+# )
 
 #
 # Experiment with different options
@@ -53,7 +70,26 @@ obs_db["obs_cpi"] = ir.Series(start_date=start_filt, values=0, )
 #
 
 ext_filt_span = start_filt + m.max_lag >> end_filt
-out, info = m.kalman_filter(obs_db, ext_filt_span, diffuse_factor=1e8, return_update=False, )
+# ext_filt_span = start_filt >> start_filt + 4
+# obs_db["std_shk_E_diff_cpi"] = ir.Series(dates=start_filt+2>>start_filt+5, values=0.222)
+
+obs_db["obs_y"] = ir.Series(start_date=start_filt+3, values=(0,), )
+obs_db["obs_diff_y"] = ir.Series(start_date=start_filt+4, values=(0,), )
+# obs_db["std_shk_y_tnd"] = ir.Series(dates=start_filt+4, values=10, )
+obs_db["shk_y_gap"] = ir.Series(dates=start_filt+2, values=10, )
+obs_db["ant_shk_y_gap"] = ir.Series(dates=start_filt+2, values=10, )
+
+out, kinfo = m.kalman_filter(
+    obs_db, filt_span,
+    diffuse_factor=1e8,
+    stds_from_data=True,
+    shocks_from_data=True,
+    prepend_initial=True,
+)
+
+
+# out.smooth_med('y_tnd | y | obs_y').plot()
+# out.smooth_med['y_gap'].plot()
 
 logger.info("Prediction step for y_tnd | y_gap")
 print(out.predict_med("y_tnd | y_gap"))
@@ -62,14 +98,14 @@ logger.info("Smoothing step for y_tnd | y_gap | y_tnd+y_gap | obs_y")
 print(out.smooth_med("y_tnd | y_gap | y_tnd+y_gap | obs_y"))
 
 logger.info("Smoothing step for cpi")
-print(out.smooth_med["cpi"])
+#print(out.smooth_med["cpi"] | obs_db["obs_cpi"])
 
 
 #
 # Resimulate the model using the smoothed initial conditions and shocks
 #
 
-sim_db, info = m.simulate(out.smooth_med, filt_span, )
+sim_db, sinfo = m.simulate(out.smooth_med, filt_span, )
 
 
 #

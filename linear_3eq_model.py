@@ -7,55 +7,17 @@ import sys
 import re
 import json
 
+import create_model
+
 # ir.min_irispie_version_required("0.22.1", )
 
 
 ## Create model object
 
-m = ir.Simultaneous.from_file("linear_3eq.model", linear=True, )
-
-# with open("linear_3eq.model", "rt") as f:
-    # x = f.read()
-# 
-# x = re.sub(r"\[(.\d+)\]", r"{\1}", x)
-# x = x.replace("unanticipated-", "")
-# x = x.replace("anticipated-", "")
-# x = x.replace("#", "%", )
-# 
-# with open("linear_3eq.matlab", "wt+") as f:
-    # f.write(x)
+m = create_model.main()
 
 
-## Assign parameters
-
-parameters = dict(
-    ss_rrs = 0.5,
-    ss_diff_cpi = 2,
-    ss_diff_y_tnd = 1.5,
-    c0_y_gap = 0.75,
-    c1_y_gap = 0.10,
-    c0_diff_cpi = 0.55,
-    c1_diff_cpi = 0.10,
-    c1_E_diff_cpi = 1,
-    c0_rs = 0.75,
-    c1_rs = 4,
-    std_shk_y_tnd = 1.0,
-    std_shk_y_gap = 1.0,
-    std_shk_diff_cpi = 1.0,
-    std_shk_rs = 1.0,
-)
-
-with open("parameters.json", "wt+") as f:
-    json.dump(parameters, f, indent=4, )
-
-m.assign(parameters, )
-
-
-## Calculate steady state
-
-m.steady()
-
-chk = m.check_steady()
+## Print steady state
 
 print(m.get_steady_levels(round=4, ))
 
@@ -133,6 +95,7 @@ fred_db = ir.Databox.from_sheet(
     "fred_data.csv",
     description_row=True,
     databox_settings=dict(description="US macro data from FRED", ),
+    date_creator=ir.Dater.from_iso_string,
 )
 
 
@@ -189,8 +152,8 @@ for i in m.get_initials(): print(i)
 mm = m.copy()
 mm.alter_num_variants(2)
 
-p = ir.PlanSimulate(mm, fcast_range)
-p.swap(fcast_range[0], ("y_gap", "shk_y_gap"))
+p = ir.SimulationPlan(mm, fcast_range, )
+p.swap_unanticipated(fcast_range[0], ("y_gap", "shk_y_gap", ), )
 
 mm[1].assign(c0_diff_cpi=0.8, )
 mm[1].solve()
@@ -209,4 +172,22 @@ fcast_db.to_sheet(
     "forecast_output_databank.csv",
     frequency_span={ir.QUARTERLY: ir.qq(2000,1)>>fcast_range[-1], },
 )
+
+from irispie import frames
+
+sim_span = ir.qq(2020,1, ..., 2023,4)
+
+p = ir.SimulationPlan(m, sim_span, )
+p.swap_unanticipated(sim_span[1], ("y_gap", "shk_y_gap", ), )
+
+test = ir.Databox()
+test["shk_y_gap"] = ir.Series(dates=(ir.qq(2020,1),ir.qq(2021,2), ), values=(1, 1), )
+
+slatable = m.get_slatable(shocks_from_data=True, )
+ds = ir.Dataslate.from_databox_for_slatable(
+    slatable, test, sim_span,
+)
+
+x = frames.split_into_frames(m, ds, p, )
+
 

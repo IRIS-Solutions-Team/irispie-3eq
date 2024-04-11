@@ -23,12 +23,13 @@
 
     !parameters
 
-        ss_rrs, ss_diff_cpi, ss_diff_y_tnd
+        ss_rrs, ss_diff_cpi, ss_diff_y
         c0_y_gap, c1_y_gap
         c0_diff_cpi, c1_diff_cpi
         c1_E_diff_cpi
         c0_rs, c1_rs
         c0_y_tnd
+
 
     !log-variables
 
@@ -39,9 +40,9 @@
 
         y = y_tnd + y_gap;
 
-        diff(y_tnd) = diff_y_tnd/4;
+        diff_y_tnd = 4*diff(y_tnd);
 
-        diff_y_tnd = ss_diff_y_tnd + shk_y_tnd;
+        diff_y_tnd = ss_diff_y + shk_y_tnd;
 
         y_gap = ...
             + c0_y_gap * y_gap[-1] ...
@@ -103,7 +104,7 @@
     !measurement-equations
 
         obs_y = y;
-        obs_diff_y = diff(y);
+        obs_diff_y = 4*diff(y);
         obs_Y = Y;
         obs_y_gap = y_gap;
         obs_y_gap4 = y_gap[-4];

@@ -1,15 +1,21 @@
-# Three-equation model
 
-## Install Iris Pie
+# Kalman filter M/Py comparison
 
-Use `pip` to install Iris Pie from `PyPI`
+## Setup
 
-```
-pip irispie
-```
-
-## Clone this repository
+* Latest Iris Toolbox from `bleeding`
+* IrisPie 0.40.3
 
 
-## Run the model
+## Execution order
+
+In Python:
+
+1. `create_data_for_filter.py`
+2. `kalman_filter.py`
+
+Then, in Matlab:
+
+3. `kalman_filter.m`
+4. `compare_mpy.m`
 

@@ -4,7 +4,8 @@
 ## Setup
 
 * Latest Iris Toolbox from `bleeding`
-* IrisPie 0.40.3
+* Python 3.12
+* IrisPie 0.40.4
 
 
 ## Execution order
